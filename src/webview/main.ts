@@ -13,7 +13,7 @@ import {
   onSettings,
   setEditorView,
 } from './sync';
-import { setupClipboard, copyAsRichText } from './clipboard';
+import { copyAsRichText } from './clipboard';
 import {
   applyFormattingToEditor,
   commandFromKeyboardEvent,
@@ -202,7 +202,6 @@ onInit((content, settings) => {
   requestAnimationFrame(() => {
     editorView = createEditor(app, content, initialSettings);
     setEditorView(editorView);
-    setupClipboard(editorView);
     setupFocusTracking(editorView);
     setupKeyboardRouting(editorView);
     setupLinkClicks(editorView);

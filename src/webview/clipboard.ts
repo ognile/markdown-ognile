@@ -1,4 +1,5 @@
 import { EditorView } from '@codemirror/view';
+import type { Extension } from '@codemirror/state';
 import TurndownService from 'turndown';
 import { sendSaveImage, sendShowError, onSaveImageResult } from './sync';
 
@@ -36,18 +37,22 @@ turndown.addRule('table', {
   },
 });
 
-export function setupClipboard(view: EditorView): void {
-  // Smart paste handler
-  view.dom.addEventListener('paste', (e: ClipboardEvent) => {
+/**
+ * CM6 extension that handles smart paste (HTML→Markdown conversion, image paste).
+ * Uses EditorView.domEventHandlers so returning `true` prevents CM6's own paste
+ * handling — fixing the double-paste bug that occurred with a raw DOM listener.
+ */
+export const clipboardExtension: Extension = EditorView.domEventHandlers({
+  paste(e: ClipboardEvent, view: EditorView) {
     const clipboard = e.clipboardData;
-    if (!clipboard) return;
+    if (!clipboard) return false;
 
     // Check for image data first
     const imageFile = Array.from(clipboard.files).find((f) => f.type.startsWith('image/'));
     if (imageFile) {
       e.preventDefault();
       handleImagePaste(view, imageFile);
-      return;
+      return true;
     }
 
     // Check for HTML content (from Google Docs, browsers, etc.)
@@ -56,16 +61,18 @@ export function setupClipboard(view: EditorView): void {
 
     if (html && plain) {
       // Check if the plain text is already markdown-like (skip conversion)
-      if (looksLikeMarkdown(plain)) return; // Let CM6 handle it normally
+      if (looksLikeMarkdown(plain)) return false; // Let CM6 handle it normally
 
       e.preventDefault();
       const md = turndown.turndown(html);
       insertText(view, md);
-      return;
+      return true;
     }
+
     // Otherwise let CM6 handle it (plain text paste)
-  });
-}
+    return false;
+  },
+});
 
 function looksLikeMarkdown(text: string): boolean {
   // If it has markdown syntax patterns, it's probably already markdown

@@ -12,6 +12,7 @@ import { floatingToolbar } from './floating-toolbar';
 import { wordCountPlugin } from './word-count';
 import { createSlashCommands } from './slash-commands';
 import { createFindReplace } from './find-replace';
+import { clipboardExtension } from './clipboard';
 import type { EditorSettings } from '../messages';
 
 // Annotation to mark cursor-adjustment transactions (prevents re-adjustment loops)
@@ -115,6 +116,9 @@ export function createEditor(
 
       // Word count status bar
       wordCountPlugin,
+
+      // Smart paste (HTML→Markdown, image paste)
+      clipboardExtension,
 
       // Line wrapping
       EditorView.lineWrapping,
