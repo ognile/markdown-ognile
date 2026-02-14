@@ -2,9 +2,10 @@
   "name": "markdown-ognile",
   "displayName": "Markdown Ognile",
   "description": "Obsidian-style live preview markdown editor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "ognile",
   "license": "MIT",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/ognile/markdown-ognile"
