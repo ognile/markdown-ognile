@@ -7,6 +7,11 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@cod
 import { createTheme } from './theme';
 import { sendEdit } from './sync';
 import { decorationField } from './decorations/index';
+import { listKeymap } from './list-commands';
+import { floatingToolbar } from './floating-toolbar';
+import { wordCountPlugin } from './word-count';
+import { createSlashCommands } from './slash-commands';
+import { createFindReplace } from './find-replace';
 import type { EditorSettings } from '../messages';
 
 // Annotation to mark cursor-adjustment transactions (prevents re-adjustment loops)
@@ -99,6 +104,18 @@ export function createEditor(
       // Fix cursor landing in heading prefix on click
       cursorRevealFix,
 
+      // Floating toolbar on text selection
+      floatingToolbar,
+
+      // Slash commands (/ menu)
+      createSlashCommands(),
+
+      // Find & Replace
+      createFindReplace(),
+
+      // Word count status bar
+      wordCountPlugin,
+
       // Line wrapping
       EditorView.lineWrapping,
 
@@ -108,8 +125,9 @@ export function createEditor(
       // Tab size
       EditorState.tabSize.of(settings.tabSize),
 
-      // Keymaps
+      // Keymaps — list commands first (fall through to defaults when not on a list line)
       keymap.of([
+        ...listKeymap,
         ...defaultKeymap,
         ...historyKeymap,
         indentWithTab,

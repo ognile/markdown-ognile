@@ -42,6 +42,24 @@ body[data-ognile-density="compact"] {
   }
 }
 
+/* ====== Motion: Keyframe animations ====== */
+
+@keyframes ognile-widget-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ognile-check-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ognile-bullet-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
 /* Light theme overrides */
 body.vscode-light {
   --ognile-code-bg: rgba(0, 0, 0, 0.05);
@@ -82,7 +100,7 @@ body.vscode-high-contrast {
   transition: background-color var(--ognile-transition-fast) ease;
 }
 
-/* Table widget */
+/* ====== Table widget ====== */
 .cm-table-wrapper {
   position: relative;
   overflow-x: auto;
@@ -155,7 +173,7 @@ body.vscode-high-contrast {
   right: 0;
 }
 
-/* Frontmatter */
+/* ====== Frontmatter ====== */
 .cm-frontmatter-widget {
   display: flex;
   align-items: center;
@@ -182,7 +200,7 @@ body.vscode-high-contrast {
   font-size: 0.9em;
 }
 
-/* Image widgets */
+/* ====== Image widgets ====== */
 .cm-image-widget img {
   max-width: 100%;
   border-radius: 4px;
@@ -196,7 +214,7 @@ body.vscode-high-contrast {
   font-style: italic;
 }
 
-/* Code block widget */
+/* ====== Code block widget ====== */
 .cm-codeblock-widget {
   background-color: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.1));
   border-radius: 6px;
@@ -217,17 +235,51 @@ body.vscode-high-contrast {
   font-family: inherit;
 }
 
-.cm-codeblock-lang {
+.cm-codeblock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 4px 12px;
+  border-bottom: 1px solid var(--vscode-editorGroup-border, rgba(128, 128, 128, 0.2));
+  min-height: 28px;
+}
+
+.cm-codeblock-lang {
   font-size: 0.75em;
   color: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.7));
-  border-bottom: 1px solid var(--vscode-editorGroup-border, rgba(128, 128, 128, 0.2));
   font-family: var(--vscode-editor-font-family, monospace);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* Checkbox */
+.cm-codeblock-copy {
+  all: unset;
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.7));
+  opacity: 0;
+  transition: opacity var(--ognile-transition-fast) ease,
+              background-color var(--ognile-transition-fast) ease,
+              color var(--ognile-transition-fast) ease;
+}
+
+.cm-codeblock-widget:hover .cm-codeblock-copy {
+  opacity: 1;
+}
+
+.cm-codeblock-copy:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.15));
+  color: var(--vscode-editor-foreground);
+}
+
+.cm-codeblock-copy--success {
+  color: var(--vscode-terminal-ansiGreen, #3fb950) !important;
+  opacity: 1 !important;
+}
+
+/* ====== Checkbox ====== */
 .cm-checkbox-widget {
   appearance: none;
   cursor: pointer;
@@ -259,23 +311,442 @@ body.vscode-high-contrast {
   transform: rotate(45deg);
 }
 
-/* List bullet */
+/* ====== List bullets ====== */
 .cm-list-bullet {
   color: var(--vscode-textLink-foreground, #007acc);
   font-size: 0.6em;
   vertical-align: middle;
+  display: inline-block;
 }
 
-/* HR widget */
+.cm-list-bullet[data-depth="1"] {
+  color: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.8));
+}
+
+.cm-list-bullet[data-depth="2"] {
+  color: var(--vscode-textLink-foreground, #007acc);
+  font-size: 0.55em;
+}
+
+.cm-list-bullet[data-depth="3"] {
+  color: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.8));
+  font-size: 0.55em;
+}
+
+/* ====== Ordered list numbers ====== */
+.cm-list-ordered-number {
+  color: var(--vscode-textLink-foreground, #007acc);
+  font-weight: 600;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+  margin-right: 2px;
+}
+
+/* ====== HR widget ====== */
 .cm-hr-widget {
   border: none;
   border-top: 1px solid var(--vscode-editorGroup-border, rgba(128, 128, 128, 0.3));
 }
 
-/* Smooth hidden syntax reveal */
+/* ====== Smooth hidden syntax reveal ====== */
 .cm-syntax-hidden {
   display: inline;
   font-size: 0;
   overflow: hidden;
   transition: font-size var(--ognile-transition-fast) ease;
+}
+
+/* ====== Motion: Widget entrance ====== */
+body:not([data-ognile-motion="off"]) .cm-table-wrapper,
+body:not([data-ognile-motion="off"]) .cm-codeblock-widget,
+body:not([data-ognile-motion="off"]) .cm-frontmatter-widget,
+body:not([data-ognile-motion="off"]) .cm-image-widget {
+  animation: ognile-widget-in var(--ognile-transition-med) ease both;
+}
+
+/* ====== Motion: Checkbox toggle pop ====== */
+body:not([data-ognile-motion="off"]) .cm-checkbox-widget:checked {
+  animation: ognile-check-pop 200ms ease;
+}
+
+/* ====== Motion: Bullet & number entrance ====== */
+body:not([data-ognile-motion="off"]) .cm-list-bullet,
+body:not([data-ognile-motion="off"]) .cm-list-ordered-number {
+  animation: ognile-bullet-in var(--ognile-transition-fast) ease both;
+}
+
+/* ====== Motion: Blockquote transitions ====== */
+.cm-blockquote {
+  transition: border-color var(--ognile-transition-fast) ease,
+              background-color var(--ognile-transition-fast) ease,
+              padding-left var(--ognile-transition-fast) ease;
+}
+
+/* ====== Floating toolbar ====== */
+.cm-floating-toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.3));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  transition: opacity var(--ognile-transition-fast) ease;
+}
+
+.cm-toolbar-btn {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--vscode-editor-foreground);
+  transition: background-color var(--ognile-transition-fast) ease;
+}
+
+.cm-toolbar-btn:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+/* CM6 tooltip container override for floating toolbar */
+.cm-tooltip:has(.cm-floating-toolbar) {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* ====== Word count ====== */
+.cm-word-count {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 4px 16px;
+  font-size: 0.75em;
+  color: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.6));
+  text-align: right;
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--vscode-editor-background) 60%);
+  z-index: 10;
+}
+
+/* ====== Slash command autocomplete ====== */
+.cm-tooltip-autocomplete {
+  background: var(--vscode-editorWidget-background, #252526) !important;
+  border: 1px solid var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.3)) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  overflow: hidden;
+}
+
+.cm-tooltip-autocomplete > ul {
+  font-family: var(--ognile-font-family) !important;
+  font-size: 0.9em;
+}
+
+.cm-tooltip-autocomplete > ul > li {
+  padding: 6px 12px !important;
+  line-height: 1.4;
+}
+
+.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--vscode-list-focusBackground, rgba(0, 122, 204, 0.3)) !important;
+  color: var(--vscode-list-focusForeground, inherit) !important;
+}
+
+.cm-completionLabel {
+  font-weight: 500;
+}
+
+.cm-completionDetail {
+  font-style: normal !important;
+  opacity: 0.6;
+  margin-left: 8px;
+}
+
+/* ====== Find & Replace panel ====== */
+
+@keyframes ognile-find-panel-in {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ognile-find-panel-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-100%); }
+}
+
+@keyframes ognile-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-2px); }
+  40%, 80% { transform: translateX(2px); }
+}
+
+@keyframes ognile-match-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--vscode-editor-findMatchBorder, rgba(81, 92, 106, 0.6)); }
+  50%  { box-shadow: 0 0 0 3px var(--vscode-editor-findMatchBorder, rgba(81, 92, 106, 0.3)); }
+  100% { box-shadow: 0 0 0 0 var(--vscode-editor-findMatchBorder, rgba(81, 92, 106, 0)); }
+}
+
+/* Panel container */
+.ognile-find-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--vscode-editorWidget-background, #252526);
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.3));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-family: var(--ognile-font-family);
+  font-size: 13px;
+  z-index: 50;
+  animation: ognile-find-panel-in var(--ognile-transition-med, 180ms) ease both;
+}
+
+body[data-ognile-motion="off"] .ognile-find-panel {
+  animation: none;
+}
+
+body[data-ognile-density="compact"] .ognile-find-panel {
+  padding: 6px 10px;
+  gap: 4px;
+}
+
+/* Rows wrapper */
+.ognile-find-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ognile-find-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.ognile-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height var(--ognile-transition-med, 180ms) ease,
+              opacity var(--ognile-transition-med, 180ms) ease;
+}
+
+.ognile-replace-row--visible {
+  max-height: 40px;
+  opacity: 1;
+}
+
+/* Inputs */
+.ognile-find-input,
+.ognile-replace-input {
+  flex: 1;
+  min-width: 80px;
+  padding: 4px 8px;
+  border: 1px solid var(--vscode-input-border, rgba(128, 128, 128, 0.4));
+  border-radius: 4px;
+  background: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, #ccc);
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--ognile-transition-fast, 120ms) ease,
+              box-shadow var(--ognile-transition-fast, 120ms) ease;
+}
+
+.ognile-find-input::placeholder,
+.ognile-replace-input::placeholder {
+  color: var(--vscode-input-placeholderForeground, rgba(128, 128, 128, 0.6));
+}
+
+.ognile-find-input:focus,
+.ognile-replace-input:focus {
+  border-color: var(--vscode-focusBorder, #007acc);
+  box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007acc);
+}
+
+/* No-match state */
+.ognile-find-input--no-match {
+  border-color: var(--vscode-inputValidation-errorBorder, #be1100) !important;
+  animation: ognile-shake 200ms ease;
+}
+
+body[data-ognile-motion="off"] .ognile-find-input--no-match {
+  animation: none;
+}
+
+/* Toggle buttons (Aa, Ab|, .*) */
+.ognile-find-toggles {
+  display: flex;
+  gap: 2px;
+}
+
+.ognile-find-toggle {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vscode-editor-foreground);
+  opacity: 0.5;
+  transition: background-color var(--ognile-transition-fast, 120ms) ease,
+              opacity var(--ognile-transition-fast, 120ms) ease;
+}
+
+.ognile-find-toggle:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.15));
+  opacity: 0.8;
+}
+
+.ognile-find-toggle--active {
+  opacity: 1;
+  background: var(--vscode-list-focusBackground, rgba(0, 122, 204, 0.3));
+}
+
+/* Match counter */
+.ognile-find-count {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground, rgba(128, 128, 128, 0.7));
+  white-space: nowrap;
+  min-width: 64px;
+  text-align: center;
+  transition: color var(--ognile-transition-fast, 120ms) ease;
+}
+
+.ognile-find-count--no-match {
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.ognile-find-count--success {
+  color: var(--vscode-testing-iconPassed, #73c991);
+  font-weight: 600;
+}
+
+/* Navigation & close buttons */
+.ognile-find-nav,
+.ognile-find-close {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--vscode-editor-foreground);
+  transition: background-color var(--ognile-transition-fast, 120ms) ease;
+}
+
+.ognile-find-nav:hover,
+.ognile-find-close:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+/* Expand/collapse chevron */
+.ognile-find-expand {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 26px;
+  cursor: pointer;
+  color: var(--vscode-editor-foreground);
+  opacity: 0.5;
+  transition: transform var(--ognile-transition-fast, 120ms) ease,
+              opacity var(--ognile-transition-fast, 120ms) ease;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ognile-find-expand:hover {
+  opacity: 1;
+}
+
+.ognile-find-expand--open {
+  transform: rotate(90deg);
+  opacity: 0.8;
+}
+
+/* Replace buttons */
+.ognile-replace-btn {
+  all: unset;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--vscode-editor-foreground);
+  background: var(--vscode-button-secondaryBackground, rgba(128, 128, 128, 0.2));
+  transition: background-color var(--ognile-transition-fast, 120ms) ease;
+  white-space: nowrap;
+}
+
+.ognile-replace-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground, rgba(128, 128, 128, 0.3));
+}
+
+/* ====== Search match highlights ====== */
+
+.cm-searchMatch {
+  background-color: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
+  border-radius: 2px;
+}
+
+.cm-searchMatch-selected {
+  background-color: var(--vscode-editor-findMatchBackground, rgba(81, 92, 106, 0.6));
+  outline: 1px solid var(--vscode-editor-findMatchBorder, #515c6a);
+  border-radius: 2px;
+  animation: ognile-match-pulse 300ms ease;
+}
+
+body[data-ognile-motion="off"] .cm-searchMatch-selected {
+  animation: none;
+}
+
+.cm-selectionMatch {
+  background-color: var(--vscode-editor-selectionHighlightBackground, rgba(173, 214, 255, 0.15));
+  border-radius: 2px;
+}
+
+/* ====== Scrollbar match markers ====== */
+
+.ognile-scrollbar-marks {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ognile-scrollbar-mark {
+  position: absolute;
+  right: 1px;
+  width: 4px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.5));
+}
+
+.ognile-scrollbar-mark--current {
+  background: var(--vscode-editor-findMatchBackground, #515c6a);
 }

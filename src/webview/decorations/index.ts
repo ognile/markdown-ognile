@@ -1,6 +1,7 @@
 import { DecorationSet, Decoration, WidgetType, EditorView } from '@codemirror/view';
 import { StateField, Annotation } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
+import type { SyntaxNode } from '@lezer/common';
 import type { Range, EditorState } from '@codemirror/state';
 import {
   applyFormattingToActiveTableCell,
@@ -84,6 +85,64 @@ function blockEnd(doc: EditorState['doc'], from: number, to: number): number {
   return safeTo;
 }
 
+// ========== List depth helpers ==========
+
+function getListNestingDepth(state: EditorState, pos: number): number {
+  let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos);
+  let depth = 0;
+  while (node.parent) {
+    node = node.parent;
+    if (node.name === 'BulletList' || node.name === 'OrderedList') {
+      depth++;
+    }
+  }
+  return Math.max(0, depth - 1);
+}
+
+function computeOrderedListLabel(state: EditorState, pos: number): string {
+  const tree = syntaxTree(state);
+  let node: SyntaxNode | null = tree.resolveInner(pos);
+
+  // Walk up to the ListItem containing this mark
+  while (node && node.name !== 'ListItem') {
+    node = node.parent;
+  }
+  if (!node) return '';
+
+  const segments: number[] = [];
+  let currentItem: SyntaxNode | null = node;
+
+  while (currentItem) {
+    const parentList = currentItem.parent;
+    if (!parentList || (parentList.name !== 'OrderedList' && parentList.name !== 'BulletList')) break;
+
+    if (parentList.name === 'OrderedList') {
+      let index = 0;
+      let sibling: SyntaxNode | null = parentList.firstChild;
+      while (sibling) {
+        if (sibling.name === 'ListItem') {
+          index++;
+          if (sibling.from === currentItem.from && sibling.to === currentItem.to) break;
+        }
+        sibling = sibling.nextSibling;
+      }
+      segments.unshift(index);
+    } else {
+      // Parent is BulletList — stop hierarchical numbering
+      break;
+    }
+
+    const grandparentItem = parentList.parent;
+    if (grandparentItem && grandparentItem.name === 'ListItem') {
+      currentItem = grandparentItem;
+    } else {
+      break;
+    }
+  }
+
+  return segments.join('.');
+}
+
 // ========== Decoration constants ==========
 
 const hiddenReplace = Decoration.replace({});
@@ -121,14 +180,30 @@ class HrWidget extends WidgetType {
   ignoreEvent() { return true; }
 }
 
+const BULLET_CHARS = ['\u25CF', '\u25CB', '\u25AA', '\u25AB']; // ●, ○, ▪, ▫
+
 class BulletWidget extends WidgetType {
+  constructor(private depth: number) { super(); }
   toDOM() {
     const span = document.createElement('span');
     span.className = 'cm-list-bullet';
-    span.textContent = '\u25CF';
+    span.setAttribute('data-depth', String(this.depth));
+    span.textContent = BULLET_CHARS[this.depth % BULLET_CHARS.length];
     return span;
   }
-  eq() { return true; }
+  eq(other: BulletWidget) { return this.depth === other.depth; }
+  ignoreEvent() { return true; }
+}
+
+class OrderedNumberWidget extends WidgetType {
+  constructor(private label: string) { super(); }
+  toDOM() {
+    const span = document.createElement('span');
+    span.className = 'cm-list-ordered-number';
+    span.textContent = this.label;
+    return span;
+  }
+  eq(other: OrderedNumberWidget) { return this.label === other.label; }
   ignoreEvent() { return true; }
 }
 
@@ -467,12 +542,40 @@ class CodeBlockWidget extends WidgetType {
     outer.style.padding = '8px 0';
     const wrapper = document.createElement('div');
     wrapper.className = 'cm-codeblock-widget';
+
+    // Header bar with language label and copy button
+    const header = document.createElement('div');
+    header.className = 'cm-codeblock-header';
+
     if (this.language) {
-      const lang = document.createElement('div');
+      const lang = document.createElement('span');
       lang.className = 'cm-codeblock-lang';
       lang.textContent = this.language;
-      wrapper.appendChild(lang);
+      header.appendChild(lang);
+    } else {
+      header.appendChild(document.createElement('span')); // spacer
     }
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'cm-codeblock-copy';
+    copyBtn.title = 'Copy code';
+    copyBtn.textContent = 'Copy';
+    const codeText = this.code;
+    copyBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigator.clipboard.writeText(codeText).then(() => {
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('cm-codeblock-copy--success');
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy';
+          copyBtn.classList.remove('cm-codeblock-copy--success');
+        }, 1500);
+      });
+    });
+    header.appendChild(copyBtn);
+    wrapper.appendChild(header);
+
     const pre = document.createElement('pre');
     const code = document.createElement('code');
     code.textContent = this.code;
@@ -828,20 +931,34 @@ function buildDecorations(state: EditorState): DecorationSet {
         return false;
       }
 
-      // === ListMark (bullet styling) ===
+      // === ListMark (bullet + ordered list styling) ===
       if (name === 'ListMark') {
         const text = doc.sliceString(from, to).trim();
+
+        // Bullet list marks
         if ((text === '-' || text === '*' || text === '+') && !isRangeSelected(sel, from, to)) {
           const lineText = doc.lineAt(from).text;
           const isTask = /^\s*[-*+]\s+\[[ x]\]/.test(lineText);
           if (isTask) {
             ranges.push(hiddenReplace.range(from, from + 1));
           } else {
+            const depth = getListNestingDepth(state, from);
             ranges.push(Decoration.replace({
-              widget: new BulletWidget(),
+              widget: new BulletWidget(depth),
             }).range(from, from + 1));
           }
         }
+
+        // Ordered list marks (e.g. "1.", "2.", "10.")
+        if (/^\d+\.$/.test(text) && !isRangeSelected(sel, from, to)) {
+          const label = computeOrderedListLabel(state, from);
+          if (label) {
+            ranges.push(Decoration.replace({
+              widget: new OrderedNumberWidget(label + '.'),
+            }).range(from, to));
+          }
+        }
+
         return false;
       }
 

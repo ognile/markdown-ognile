@@ -84,6 +84,10 @@ export function createTheme(): Extension {
       fontSize: '0.9em',
     },
 
+    // Override CM6 default panel styling (our CSS handles it)
+    '.cm-panels': { backgroundColor: 'transparent', border: 'none' },
+    '.cm-panels-top': { borderBottom: 'none' },
+
     // Widget visuals are in CSS to keep a single style authority.
   });
 }

@@ -26,6 +26,7 @@ import {
   setWidgetShortcutInterceptionEnabled,
   tryHandleTableWidgetCommand,
 } from './decorations/index';
+import { openFind, openFindReplace } from './find-replace';
 import type { EditorView } from '@codemirror/view';
 import type { EditorSettings } from '../messages';
 
@@ -118,6 +119,27 @@ function setupKeyboardRouting(view: EditorView) {
 
     const active = document.activeElement as HTMLElement | null;
     if (active && active.matches('td[contenteditable="true"], th[contenteditable="true"]') && active.closest('.cm-table-widget')) {
+      return;
+    }
+
+    // Find & Replace shortcuts — intercept before VS Code can steal them
+    const isMeta = event.metaKey || event.ctrlKey;
+    const key = event.key.toLowerCase();
+
+    // Cmd+F / Ctrl+F: Open Find
+    if (isMeta && key === 'f' && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      openFind(view);
+      return;
+    }
+
+    // Cmd+Opt+F (Mac) / Ctrl+H (Win/Linux): Open Find & Replace
+    const isMac = navigator.platform.includes('Mac');
+    if ((isMeta && event.altKey && key === 'f') || (!isMac && isMeta && key === 'h')) {
+      event.preventDefault();
+      event.stopPropagation();
+      openFindReplace(view);
       return;
     }
 
