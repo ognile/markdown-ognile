@@ -1,0 +1,30 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--ognile-font-family);
+  font-size: var(--ognile-font-size);
+  line-height: var(--ognile-line-height);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.06)) 0%,
+    var(--vscode-editor-background) 120px
+  );
+}
+
+.cm-editor {
+  height: 100%;
+}
+
+.cm-scroller {
+  overflow: auto !important;
+}

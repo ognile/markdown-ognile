@@ -1,0 +1,178 @@
+{
+  "name": "markdown-ognile",
+  "displayName": "Markdown Ognile",
+  "description": "Obsidian-style live preview markdown editor",
+  "version": "0.1.0",
+  "publisher": "ognile",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "ognile.editor",
+        "displayName": "Markdown Ognile",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "ognile.bold",
+        "title": "Ognile: Toggle Bold"
+      },
+      {
+        "command": "ognile.italic",
+        "title": "Ognile: Toggle Italic"
+      },
+      {
+        "command": "ognile.strikethrough",
+        "title": "Ognile: Toggle Strikethrough"
+      },
+      {
+        "command": "ognile.link",
+        "title": "Ognile: Insert Link"
+      },
+      {
+        "command": "ognile.copyRich",
+        "title": "Ognile: Copy as Rich Text"
+      },
+      {
+        "command": "ognile.switchEditor",
+        "title": "Ognile: Switch to Raw Editor"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "ognile.bold",
+        "key": "ctrl+b",
+        "mac": "cmd+b",
+        "when": "ognile.active && ognile.hostShortcutsEnabled && activeCustomEditorId == 'ognile.editor'"
+      },
+      {
+        "command": "ognile.italic",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "ognile.active && ognile.hostShortcutsEnabled && activeCustomEditorId == 'ognile.editor'"
+      },
+      {
+        "command": "ognile.strikethrough",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
+        "when": "ognile.active && ognile.hostShortcutsEnabled && activeCustomEditorId == 'ognile.editor'"
+      },
+      {
+        "command": "ognile.link",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "ognile.active && ognile.hostShortcutsEnabled && activeCustomEditorId == 'ognile.editor'"
+      },
+      {
+        "command": "ognile.copyRich",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "ognile.active && activeCustomEditorId == 'ognile.editor'"
+      },
+      {
+        "command": "ognile.switchEditor",
+        "key": "ctrl+k y",
+        "mac": "cmd+k y"
+      }
+    ],
+    "configuration": {
+      "title": "Ognile",
+      "properties": {
+        "ognile.shortcuts.mode": {
+          "type": "string",
+          "enum": [
+            "hybrid",
+            "hostOnly",
+            "webviewOnly"
+          ],
+          "default": "hybrid",
+          "description": "Shortcut routing mode: hybrid (host + webview), hostOnly, or webviewOnly."
+        },
+        "ognile.formatting.emptySelectionBehavior": {
+          "type": "string",
+          "enum": [
+            "word",
+            "markers"
+          ],
+          "default": "word",
+          "description": "Behavior for formatting commands when there is no selection."
+        },
+        "ognile.formatting.italicDelimiter": {
+          "type": "string",
+          "enum": [
+            "underscore",
+            "asterisk"
+          ],
+          "default": "underscore",
+          "description": "Preferred markdown delimiter for italic toggling."
+        },
+        "ognile.ui.motionLevel": {
+          "type": "string",
+          "enum": [
+            "off",
+            "subtle",
+            "full"
+          ],
+          "default": "subtle",
+          "description": "Controls transition intensity in the Ognile editor UI."
+        },
+        "ognile.ui.widgetDensity": {
+          "type": "string",
+          "enum": [
+            "comfortable",
+            "compact"
+          ],
+          "default": "comfortable",
+          "description": "Controls widget spacing density (tables/frontmatter controls)."
+        },
+        "ognile.ui.typographyScale": {
+          "type": "number",
+          "minimum": 0.85,
+          "maximum": 1.35,
+          "default": 1,
+          "description": "Global typography scale for heading rhythm in the Ognile editor."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test:regression": "npm run build && node test/regression-playwright.cjs",
+    "watch": "tsup --watch",
+    "package": "tsup && vsce package --no-dependencies",
+    "install-ext": "antigravity --install-extension markdown-ognile-*.vsix"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/turndown": "^5.0.6",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.7.1",
+    "@codemirror/lang-markdown": "^6.3.1",
+    "@codemirror/language": "^6.10.8",
+    "@codemirror/state": "^6.5.1",
+    "@codemirror/view": "^6.36.3",
+    "@lezer/markdown": "^1.3.2",
+    "dompurify": "^3.2.3",
+    "turndown": "^7.2.0"
+  }
+}

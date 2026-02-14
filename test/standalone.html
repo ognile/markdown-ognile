@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ognile Standalone Test</title>
+  <link rel="stylesheet" href="../dist/webview/styles.css">
+  <style>
+    /* Make editor expand to full content height for screenshot testing */
+    html, body { height: auto !important; min-height: 100vh; }
+    #app { height: auto !important; }
+    .cm-editor { height: auto !important; }
+    .cm-scroller { overflow: visible !important; }
+    /* VS Code CSS variable defaults for standalone testing */
+    :root {
+      --vscode-editor-background: #1e1e1e;
+      --vscode-editor-foreground: #d4d4d4;
+      --vscode-editorCursor-foreground: #aeafad;
+      --vscode-editor-selectionBackground: #264f78;
+      --vscode-textLink-foreground: #3794ff;
+      --vscode-textBlockQuote-border: #007acc;
+      --vscode-textBlockQuote-background: rgba(127,127,127,0.1);
+      --vscode-textCodeBlock-background: rgba(128,128,128,0.15);
+      --vscode-editorGroup-border: rgba(128,128,128,0.35);
+      --vscode-editorGhostText-foreground: rgba(128,128,128,0.5);
+      --vscode-checkbox-border: rgba(128,128,128,0.6);
+      --vscode-checkbox-background: #007acc;
+      --vscode-list-hoverBackground: rgba(128,128,128,0.08);
+      --vscode-descriptionForeground: rgba(128,128,128,0.8);
+      --vscode-editor-font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    // Mock VS Code API
+    function acquireVsCodeApi() {
+      return {
+        postMessage: function(msg) { console.log('[vscode mock] postMessage:', msg.type); },
+        getState: function() { return {}; },
+        setState: function(state) {}
+      };
+    }
+  </script>
+  <script src="../dist/webview/main.global.js"></script>
+  <script>
+    // Send init message after a small delay to let callbacks register
+    setTimeout(function() {
+      var content = "---\ntitle: Test Fixture\nauthor: Nikita\ndate: 2026-02-11\n---\n\n# Heading 1\n\n## Heading 2\n\n### Heading 3\n\n#### Heading 4\n\n##### Heading 5\n\n###### Heading 6\n\nThis is a paragraph with **bold text**, *italic text*, ***bold and italic***, ~~strikethrough~~, and `inline code`.\n\nHere is a [standard link](https://example.com) and a [[Wiki link]] and a [[page|aliased wiki link]].\n\n![Sample Image](https://via.placeholder.com/300x200)\n\n| Name | Age | City |\n|:-----|:---:|-----:|\n| Alice | 30 | New York |\n| Bob | 25 | London |\n| Charlie | 35 | Tokyo |\n\n> This is a blockquote.\n> It can span multiple lines.\n\n```javascript\nfunction hello() {\n  console.log(\"Hello, Ognile!\");\n  return true;\n}\n```\n\n---\n\n- Unordered item 1\n- Unordered item 2\n  - Nested item\n    - Deeply nested\n\n1. Ordered item 1\n2. Ordered item 2\n3. Ordered item 3\n\n- [ ] Unchecked task\n- [x] Checked task\n- [ ] Another unchecked task\n\nThis paragraph has **bold with *nested italic* inside** and some `code with **stars** inside`.\n\n\\*This should not be italic\\* because it's escaped.";
+      window.postMessage({
+        type: 'init',
+        content: content,
+        settings: {
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontSize: 16,
+          lineHeight: 1.7,
+          tabSize: 4,
+          shortcutsMode: 'hybrid',
+          emptySelectionBehavior: 'word',
+          italicDelimiter: 'underscore',
+          motionLevel: 'subtle',
+          widgetDensity: 'comfortable',
+          typographyScale: 1
+        }
+      }, '*');
+    }, 100);
+
+    // Diagnostic: compare CM6 height map vs actual DOM positions for every line
+    setTimeout(function() {
+      var view = window.__editorView;
+      if (!view) { console.log('NO EDITOR VIEW'); return; }
+
+      function runDiag(label) {
+        var doc = view.state.doc;
+        var contentTop = view.contentDOM.getBoundingClientRect().top;
+        var info = [];
+        info.push('=== ' + label + ' ===');
+        info.push('contentDOM.top=' + contentTop.toFixed(1));
+
+        // Compare CM6 lineBlockAt vs DOM positions for ALL lines
+        var domChildren = Array.from(view.contentDOM.children);
+        var domIdx = 0;
+        var maxDrift = 0;
+        var maxDriftLine = 0;
+
+        for (var lineNum = 1; lineNum <= doc.lines; lineNum++) {
+          var line = doc.line(lineNum);
+          try {
+            var block = view.lineBlockAt(line.from);
+            // CM6's expected viewport Y for this block
+            var cm6Top = block.top + contentTop;
+            // Find the actual DOM element for this position
+            var domEl = view.domAtPos(line.from);
+            var actualTop = -1;
+            if (domEl && domEl.node) {
+              var el = domEl.node.nodeType === 1 ? domEl.node : domEl.node.parentElement;
+              if (el) {
+                var r = el.getBoundingClientRect();
+                actualTop = r.top;
+              }
+            }
+            var drift = actualTop >= 0 ? (actualTop - cm6Top) : NaN;
+            if (!isNaN(drift) && Math.abs(drift) > Math.abs(maxDrift)) {
+              maxDrift = drift;
+              maxDriftLine = lineNum;
+            }
+            var marker = Math.abs(drift) > 2 ? ' <<<' : '';
+            info.push('L' + lineNum + ' cm6top=' + cm6Top.toFixed(1) + ' domTop=' + (actualTop >= 0 ? actualTop.toFixed(1) : '?') + ' drift=' + (isNaN(drift) ? '?' : drift.toFixed(1)) + ' h=' + block.height.toFixed(1) + (block.widget ? ' [widget]' : '') + marker);
+          } catch(e) {
+            info.push('L' + lineNum + ' ERROR: ' + e.message);
+          }
+        }
+
+        info.push('MAX DRIFT: ' + maxDrift.toFixed(1) + 'px at line ' + maxDriftLine);
+
+        // DOM hierarchy analysis for image widget
+        var imgWidget = view.contentDOM.querySelector('.cm-image-widget');
+        if (imgWidget) {
+          info.push('--- IMAGE WIDGET DOM HIERARCHY ---');
+          var el = imgWidget;
+          while (el && el !== view.dom) {
+            var r = el.getBoundingClientRect();
+            var cs = getComputedStyle(el);
+            info.push('  <' + el.tagName + ' class="' + el.className + '"> offsetH=' + el.offsetHeight + ' bcrH=' + r.height.toFixed(1) + ' bcrTop=' + r.top.toFixed(1) + ' pt=' + cs.paddingTop + ' pb=' + cs.paddingBottom + ' mt=' + cs.marginTop + ' mb=' + cs.marginBottom);
+            el = el.parentElement;
+          }
+        }
+
+        // posAtCoords test around the table (lines 25-29 in test content)
+        var tableWidget = view.contentDOM.querySelector('.cm-table-widget');
+        if (tableWidget) {
+          var tw = tableWidget.parentElement;
+          var tRect = tw.getBoundingClientRect();
+          info.push('--- posAtCoords after table (bottom=' + tRect.bottom.toFixed(1) + ') ---');
+          for (var dy = 5; dy <= 60; dy += 10) {
+            var y = tRect.bottom + dy;
+            var pos = view.posAtCoords({ x: tRect.left + 10, y: y });
+            if (pos !== null) {
+              var ln = doc.lineAt(pos);
+              info.push('  y=' + y.toFixed(0) + ' (bottom+' + dy + ') => line ' + ln.number + ' "' + ln.text.substring(0, 30) + '"');
+            }
+          }
+        }
+
+        return info;
+      }
+
+      // Run BEFORE requestMeasure
+      var before = runDiag('BEFORE requestMeasure');
+
+      // Force remeasure
+      view.requestMeasure();
+
+      // Wait for the measure cycle to complete, then run again
+      setTimeout(function() {
+        var after = runDiag('AFTER requestMeasure');
+
+        var all = before.concat([''], after);
+        var debugDiv = document.createElement('div');
+        debugDiv.style.cssText = 'position:fixed;top:0;right:0;width:600px;max-height:100vh;overflow:auto;background:rgba(0,0,0,0.9);color:#0f0;font:11px monospace;padding:8px;z-index:9999;white-space:pre-wrap;';
+        debugDiv.textContent = all.join('\n');
+        document.body.appendChild(debugDiv);
+        console.log(all.join('\n'));
+      }, 200);
+    }, 500);
+  </script>
+</body>
+</html>
